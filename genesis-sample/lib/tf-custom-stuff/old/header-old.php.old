@@ -1,0 +1,200 @@
+<div class="container-fluid my-header-container" align="center">
+    <div class="container">
+        <div align="center" class="my-header-logoContainer">
+            <?php $logo = get_field( 'logo', 'option' ); ?>
+            <?php if ( $logo ) : ?>
+                <a class="my-header-logoLink" href="<?php echo get_home_url(); ?>">
+                    <img class="my-header-logo" src="<?php echo esc_url( $logo['url'] ); ?>" alt="<?php echo esc_attr( $logo['alt'] ); ?>" />
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+
+
+        <?php
+
+        $ParentArray = array();
+        $arrayCount = 0;
+
+        function get_menu_array($arrayCount, $menuIDArray, $ParentArray){
+
+            foreach ($menuIDArray as $menuID){
+
+                $menuNav = wp_get_nav_menu_items($menuID);
+
+                //echo json_encode($menuNav);
+
+                foreach ($menuNav as $item){
+                    if($item->menu_item_parent == 0){
+                        $itemArray = array(
+                            'ID' => $item->ID,
+                            'name' => $item->title,
+                            'url' => $item->url,
+                            'object_id' => $item->object_id,
+                            'object' => $item->object,
+                            'menu_id' => $menuID
+                        );
+                        array_push($ParentArray, $itemArray);
+                    }
+                }
+
+                $SubParentArray = array();
+                foreach ($menuNav as $item){
+                    if($item->menu_item_parent == $ParentArray[$arrayCount]['ID']){
+                        array_push($SubParentArray, $item->ID);
+                    }
+                }
+
+                foreach ($menuNav as $item){
+                    $subItemArray = array(
+                        'ID' => $item->ID,
+                        'name' => $item->title,
+                        'url' => $item->url,
+                        'object_id' => $item->object_id,
+                        'object' => $item->object
+                    );
+                    if($item->menu_item_parent == $ParentArray[$arrayCount]['ID']){
+                        $ParentArray[$arrayCount]['subParentsNav'][$item->ID] = $subItemArray;
+                    }
+                }
+
+                $childArrray = array();
+                foreach ($menuNav as $item){
+                    if( in_array($item->menu_item_parent, $SubParentArray)){
+                        $childItemArray = array(
+                            'ID' => $item->ID,
+                            'name' => $item->title,
+                            'url' => $item->url,
+                            'object_id' => $item->object_id,
+                            'object' => $item->object
+                        );
+                        $ParentArray[$arrayCount]['subParentsNav'][$item->menu_item_parent]['childNav'][$item->ID] = $childItemArray;
+                        array_push($childArrray, $item->title);
+                    }
+                }
+                if($arrayCount == 3){
+                    $itemArray = array(
+                        'ID' => 'null',
+                        'name' => 'Exotics',
+                        'url' => 'https://racetechtitanium.com/product-category/exotics/?selected_menu_page_id=52976',
+                        'object_id' => 'null',
+                        'object' => 'custom',
+                        'menu_id' => 'null'
+                    );
+                    array_push($ParentArray, $itemArray);
+                    $arrayCount++;
+                }
+                $arrayCount++;
+            }
+
+            return $ParentArray;
+        }
+
+        $menuIDArray = array(
+            'MOTOCROSS' => 1812,
+            'SXS/UTV' => 2193,
+            'QUADS/ATV' => 1813,
+            'DRAG RACING' => 1788,
+            'MISC. VEHICLES' => 1802,
+            'FASTENERS' => 2970,
+            'MATERIAL' => 1815
+        );
+
+        $parentArray = get_menu_array($arrayCount, $menuIDArray, $ParentArray);
+
+        ?>
+
+<div class="container-fluid my-header-navbar-container">
+    <div class="container">
+
+        <?php if (!empty($parentArray)){ ?>
+            <div align="center" style="text-align: center">
+                <nav class="navbar navbar-expand-lg justify-content-center my-header-navbar">
+
+                    <div class="collapse navbar-collapse justify-content-center" id="navbarSupportedContent">
+                        <ul class="navbar-nav my-header-navbar-ul">
+
+                            <?php foreach ($parentArray as $item){ ?>
+
+                                <?php if (!empty($item['subParentsNav'])){ ?>
+
+                                    <li class="nav-item dropdown mega-dropdown my-header-navbar-li">
+                                    <?php if($item['object'] == 'product_cat'){ ?>
+                                        <a class="nav-link text-uppercase my-header-navbar-links" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="<?php echo get_category_link( (int)$item['object_id'] ); ?>"><?php echo get_term( (int)$item['object_id'] )->name; ?></a>
+                                    <?php }elseif ($item['object'] == 'custom'){ ?>
+                                        <a class="nav-link text-uppercase my-header-navbar-links" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" href="<?php echo $item['url']; ?>"><?php echo $item['name']; ?></a>
+                                    <?php } ?>
+
+
+                                <?php }else{ ?>
+
+                                    <li class="nav-item my-header-navbar-li">
+                                    <?php if($item['object'] == 'product_cat'){ ?>
+                                        <a class="nav-link text-uppercase my-header-navbar-links" href="<?php echo get_category_link( (int)$item['object_id'] ); ?>"><?php echo get_term( (int)$item['object_id'] )->name; ?></a>
+                                    <?php }elseif ($item['object'] == 'custom'){ ?>
+                                        <a class="nav-link text-uppercase my-header-navbar-links"  href="<?php echo $item['url']; ?>"><?php echo $item['name']; ?></a>
+                                    <?php } ?>
+
+                                    </li>
+                                <?php } ?>
+
+                                    <?php if(!empty($item['subParentsNav'])){ ?>
+                                        <div class="dropdown-menu mega-menu v-2 py-5 px-3 my-header-megamenu-container"
+                                             aria-labelledby="navbarDropdownMenuLink2">
+                                            <div align="center">
+                                                <h5 class="sub-title text-uppercase my-header-megamenu-header">
+                                                    <?php if($item['object'] == 'product_cat'){ ?>
+                                                        <a class="nav-link text-uppercase my-header-megamenu-headerLinks" href="<?php echo get_category_link( (int)$item['object_id'] ); ?>"><?php echo get_term( (int)$item['object_id'] )->name; ?></a>
+                                                    <?php }elseif ($item['object'] == 'custom'){ ?>
+                                                        <a class="nav-link text-uppercase my-header-megamenu-headerLinks" href="<?php echo $item['url']; ?>"><?php echo $item['name']; ?></a>
+                                                    <?php } ?>
+                                                </h5>
+                                            </div>
+                                            <div class="row">
+                                                <?php foreach ($item['subParentsNav'] as $subParent) { ?>
+                                                    <div class="col-md-6 col-xl-3 sub-menu mb-xl-0 mb-4 my-header-megamenu-containers">
+                                                        <?php if($subParent['object'] == 'product_cat'){ ?>
+                                                            <h6 class="sub-title text-uppercase my-header-megamenu-subheaders">
+                                                                <a class="my-header-megamenu-subheadersLinks" href="<?php echo get_category_link( (int)$subParent['object_id'] ); ?>"><?php echo get_term( (int)$subParent['object_id'] )->name; ?></a>
+                                                            </h6>
+                                                        <?php }elseif ($subParent['object'] == 'custom'){ ?>
+                                                            <h6 class="sub-title text-uppercase my-header-megamenu-subheaders">
+                                                                <a class="my-header-megamenu-subheadersLinks" href="<?php echo $subParent['url']; ?>"><?php echo $subParent['name']; ?></a>
+                                                            </h6>
+                                                        <?php } ?>
+                                                        <?php if(!empty($subParent['childNav'])){ ?>
+                                                            <hr class="my-header-megamenu-hrlines"/>
+                                                            <ul class="list-unstyled my-header-megamenu-ul">
+                                                                <li class="my-header-megamenu-li">
+                                                                    <?php foreach ($subParent['childNav'] as $childItem) { ?>
+                                                                        <?php if($childItem['object'] == 'product_cat'){ ?>
+                                                                            <a class="menu-item pl-0 my-header-megamenu-links" href="<?php echo get_category_link( (int)$childItem['object_id'] ); ?>">
+                                                                                <?php echo get_term( (int)$childItem['object_id'] )->name; ?>
+                                                                            </a>
+                                                                        <?php }elseif ($childItem['object'] == 'custom'){ ?>
+                                                                            <a class="menu-item pl-0 my-header-megamenu-links" href="<?php echo $childItem['url']; ?>">
+                                                                                <?php echo $childItem['name']; ?>
+                                                                            </a>
+                                                                        <?php } ?>
+                                                                    <?php } ?>
+                                                                </li>
+                                                            </ul>
+                                                        <?php } ?>
+                                                    </div>
+                                                <?php } ?>
+                                            </div>
+                                        </div>
+                                    <?php } ?>
+                                </li>
+                            <?php } ?>
+
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        <?php } ?>
+
+    </div>
+</div>

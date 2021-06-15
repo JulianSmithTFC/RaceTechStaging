@@ -1,0 +1,63 @@
+<?php
+
+if ( function_exists('register_nav_menus' )) {
+    register_nav_menus(
+        array(
+            'primary' => 'Primary Navigation Menu',
+            'footer' => 'Footer Navigation Menu',
+        )
+    );
+}
+
+
+// Function to clean up the standard wp_list_pages returned values
+function acg_wp_list_pages($args) {
+    $echo = false;
+    if (!is_array($args)) {
+        $pairs = explode("&", $args);
+        unset($args);
+        foreach($pairs as $k=>$v) {
+            $pair = explode("=", $v);
+            $args[$pair[0]] = $pair[1];
+        }
+    }
+    if (!isset($args["echo"]) || $args["echo"]!=0) {
+        $args["echo"]=0;
+        $echo = true;
+    }
+    if (isset($args["image"]) || isset($args["useimages"]) || isset($args["image_dir"])) {
+        acg_image_menu($args);
+        return;
+    }
+    // Change here to get the nav menu...
+    // Function to clean up the standard wp_nav_menu returned values
+    $str = wp_nav_menu($args);
+    $pos = stripos($str, "<li") + 1;
+    $pos = stripos($str, "class=", $pos) + 7;
+    $str = substr($str, 0, $pos) . 'first_page ' . substr($str, $pos);
+    $str = str_replace(array("\n", "\r", "\t"), "", $str);
+    // Strip out the ul container
+    $pos = stripos($str, "<ul");
+    if ($pos!==false) {
+        $end = stripos($str, ">", $pos);
+        $str = substr($str, 0, $pos) . substr($str, $end+1);
+        $pos = strripos($str, "</ul>");
+        $str = substr($str, 0, $pos) . substr($str, $pos+5);
+    }
+    // Strip out the div container
+    $pos = stripos($str, "<div");
+    if ($pos!==false) {
+        $end = stripos($str, ">", $pos);
+        $str = substr($str, 0, $pos) . substr($str, $end+1);
+        $pos = strripos($str, "</div>");
+        $str = substr($str, 0, $pos) . substr($str, $pos+6);
+    }
+    if ($echo) {
+        echo $str;
+    } else {
+        return $str;
+    }
+}
+
+
+?>

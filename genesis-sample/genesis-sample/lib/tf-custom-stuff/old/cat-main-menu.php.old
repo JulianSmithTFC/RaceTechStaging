@@ -1,0 +1,173 @@
+<?php
+$ParentArray = array();
+$arrayCount = 0;
+
+function get_menu_array($arrayCount, $menuIDArray, $ParentArray){
+
+    foreach ($menuIDArray as $menuID){
+
+        $menuNav = wp_get_nav_menu_items($menuID);
+
+        //echo json_encode($menuNav);
+
+        foreach ($menuNav as $item){
+            if($item->menu_item_parent == 0){
+                $itemArray = array(
+                    'ID' => 'cat-' . $item->ID,
+                    'name' => $item->title,
+                    'url' => $item->url,
+                    'object_id' => $item->object_id,
+                    'object' => $item->object,
+                    'type' => 'full-menu',
+                    'menu_id' => $menuID
+                );
+                array_push($ParentArray, $itemArray);
+            }
+        }
+
+        $SecondDownArray = array();
+        foreach ($menuNav as $item){
+            if('cat-' . $item->menu_item_parent == $ParentArray[$arrayCount]['ID']){
+                array_push($SecondDownArray, ('cat-' . $item->ID));
+            }
+        }
+
+        foreach ($menuNav as $item){
+            $itemArray = array(
+                'ID' => 'cat-' . $item->ID,
+                'name' => $item->title,
+                'url' => $item->url,
+                'object_id' => $item->object_id,
+                'object' => $item->object,
+                'type' => 'full-menu'
+            );
+            if('cat-' . $item->menu_item_parent == $ParentArray[$arrayCount]['ID']){
+                $ParentArray[$arrayCount]['forthLevel']['cat-' . $item->ID] = $itemArray;
+            }
+        }
+
+        $thirdIDArrray = array();
+        $thirdArray = array();
+        foreach ($menuNav as $item){
+            if( in_array('cat-' . $item->menu_item_parent, $SecondDownArray)){
+                $itemArray = array(
+                    'ID' => 'cat-' . $item->ID,
+                    'name' => $item->title,
+                    'url' => $item->url,
+                    'object_id' => $item->object_id,
+                    'object' => $item->object,
+                    'type' => 'full-menu'
+                );
+
+                $thirdItemArray = array(
+                    'ID' => 'cat-' . $item->ID,
+                    'name' => $item->title,
+                    'parentID' => 'cat-' . $item->menu_item_parent
+                );
+
+                $ParentArray[$arrayCount]['forthLevel']['cat-' . $item->menu_item_parent]['fifthLevel']['cat-' . $item->ID] = $itemArray;
+                array_push($thirdIDArrray, 'cat-' . $item->ID);
+                array_push($thirdArray, $thirdItemArray);
+            }
+        }
+
+        $forthIDArrray = array();
+        $forthArray = array();
+        foreach ($menuNav as $item){
+            if( in_array('cat-' . $item->menu_item_parent, $thirdIDArrray)){
+                $itemArray = array(
+                    'ID' => 'cat-' . $item->ID,
+                    'name' => $item->title,
+                    'url' => $item->url,
+                    'object_id' => $item->object_id,
+                    'object' => $item->object,
+                    'type' => 'full-menu'
+                );
+
+                foreach ($thirdArray as $child){
+                    if ($child['ID'] == 'cat-' . $item->menu_item_parent){
+                        $parentID = $child['parentID'];
+
+                        $forthItemArray = array(
+                            'ID' => 'cat-' . $item->ID,
+                            'secondID' => $parentID,
+                            'thirdID' => 'cat-' . $item->menu_item_parent
+                        );
+
+                        $ParentArray[$arrayCount]['forthLevel'][$parentID]['fifthLevel']['cat-' . $item->menu_item_parent]['sixthLevel']['cat-' . $item->ID] = $itemArray;
+                        array_push($forthIDArrray, 'cat-' . $item->ID);
+                        array_push($forthArray, $forthItemArray);
+
+                    }
+                }
+            }
+        }
+
+        $fithIDArrray = array();
+        $fithArray = array();
+        foreach ($menuNav as $item){
+            if( in_array('cat-' . $item->menu_item_parent, $forthIDArrray)){
+
+                $itemArray = array(
+                    'ID' => 'cat-' . $item->ID,
+                    'name' => $item->title,
+                    'url' => $item->url,
+                    'object_id' => $item->object_id,
+                    'object' => $item->object,
+                    'type' => 'full-menu'
+                );
+
+                foreach ($forthArray as $child){
+                    if ($child['ID'] == 'cat-' . $item->menu_item_parent){
+                        $secondID = $child['secondID'];
+                        $thirdID = $child['thirdID'];
+
+                        $fithItemArray = array(
+                            'ID' => 'cat-' . $item->ID,
+                            'secondID' => $secondID,
+                            'thirdID' => $thirdID,
+                            'forthID' => 'cat-' . $item->menu_item_parent
+                        );
+
+                        $ParentArray[$arrayCount]['forthLevel'][$secondID]['fifthLevel'][$thirdID]['sixthLevel']['cat-' . $item->menu_item_parent]['seventhLevel']['cat-' . $item->ID] = $itemArray;
+                        array_push($fithIDArrray, 'cat-' . $item->ID);
+                        array_push($fithArray, $fithItemArray);
+                    }
+                }
+
+            }
+        }
+
+
+        if($arrayCount == 3){
+            $itemArray = array(
+                'ID' => 'null',
+                'name' => 'Exotics',
+                'url' => get_site_url() . '/product-category/exotics/?selected_menu_page_id=52976',
+                'object_id' => 'null',
+                'object' => 'custom',
+                'type' => 'full-menu',
+                'menu_id' => 'null'
+            );
+            array_push($ParentArray, $itemArray);
+            $arrayCount++;
+        }
+        $arrayCount++;
+    }
+
+    return $ParentArray;
+}
+
+$menuIDArray = array(
+    'MOTOCROSS' => 3462,
+    'SXS/UTV' => 2193,
+    'QUADS/ATV' => 1813,
+    'DRAG RACING' => 1788,
+    'MISC. VEHICLES' => 1802,
+    'FASTENERS' => 2970,
+    'MATERIAL' => 1815
+);
+
+$fullMenuArray = get_menu_array($arrayCount, $menuIDArray, $ParentArray);
+
+?>
